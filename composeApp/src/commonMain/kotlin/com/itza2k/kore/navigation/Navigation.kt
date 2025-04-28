@@ -11,7 +11,8 @@ enum class Screen {
     HABITS,
     REWARDS,
     INSIGHTS,
-    ONBOARDING
+    ONBOARDING,
+    AI_ASSISTANT
 }
 
 class NavigationState(

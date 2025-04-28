@@ -15,6 +15,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.itza2k.kore.navigation.Screen
 import com.itza2k.kore.navigation.rememberNavigationState
 import com.itza2k.kore.theme.KoreTheme
+import com.itza2k.kore.ui.screens.ai.AiScreen
 import com.itza2k.kore.ui.screens.dashboard.DashboardScreen
 import com.itza2k.kore.ui.screens.habits.HabitsScreen
 import com.itza2k.kore.ui.screens.insights.InsightsScreen
@@ -85,7 +86,8 @@ fun MainScreen(viewModel: KoreViewModel, navigationState: com.itza2k.kore.naviga
                 Triple(Screen.DASHBOARD, "Dashboard", Icons.Default.Home),
                 Triple(Screen.HABITS, "Habits", Icons.Default.CheckCircle),
                 Triple(Screen.REWARDS, "Rewards", Icons.Default.Star),
-                Triple(Screen.INSIGHTS, "Insights", Icons.Default.Info)
+                Triple(Screen.INSIGHTS, "Insights", Icons.Default.Info),
+                Triple(Screen.AI_ASSISTANT, "AI Assistant", Icons.Default.Menu)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -111,6 +113,7 @@ fun MainScreen(viewModel: KoreViewModel, navigationState: com.itza2k.kore.naviga
                 Screen.HABITS -> HabitsScreen(viewModel)
                 Screen.REWARDS -> RewardsScreen(viewModel)
                 Screen.INSIGHTS -> InsightsScreen(viewModel)
+                Screen.AI_ASSISTANT -> AiScreen(viewModel)
                 Screen.ONBOARDING -> {} // Handled outside this when statement
             }
         }
