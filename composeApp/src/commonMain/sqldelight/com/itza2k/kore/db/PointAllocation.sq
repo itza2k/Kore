@@ -1,0 +1,101 @@
+CREATE TABLE PointAllocation (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    totalPoints INTEGER NOT NULL,
+    period TEXT NOT NULL DEFAULT 'WEEKLY',
+    startDate INTEGER NOT NULL,
+    endDate INTEGER NOT NULL,
+    isActive INTEGER NOT NULL DEFAULT 1
+);
+
+-- Table to store allocation items (habitId to points mapping)
+CREATE TABLE PointAllocationItem (
+    id TEXT NOT NULL PRIMARY KEY,
+    allocationId TEXT NOT NULL,
+    habitId TEXT NOT NULL,
+    points INTEGER NOT NULL,
+    FOREIGN KEY (allocationId) REFERENCES PointAllocation(id) ON DELETE CASCADE,
+    FOREIGN KEY (habitId) REFERENCES Habit(id) ON DELETE CASCADE
+);
+
+-- Get all point allocations
+selectAll:
+SELECT *
+FROM PointAllocation
+ORDER BY startDate DESC;
+
+-- Get active point allocations
+selectActive:
+SELECT *
+FROM PointAllocation
+WHERE isActive = 1
+ORDER BY startDate DESC;
+
+-- Get a specific point allocation
+selectById:
+SELECT *
+FROM PointAllocation
+WHERE id = ?;
+
+-- Get allocation items for a specific allocation
+selectItemsForAllocation:
+SELECT pai.*, h.name AS habitName
+FROM PointAllocationItem pai
+JOIN Habit h ON pai.habitId = h.id
+WHERE pai.allocationId = ?
+ORDER BY h.name;
+
+-- Insert a new point allocation
+insertAllocation:
+INSERT INTO PointAllocation(id, name, description, totalPoints, period, startDate, endDate, isActive)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+-- Insert a new allocation item
+insertAllocationItem:
+INSERT INTO PointAllocationItem(id, allocationId, habitId, points)
+VALUES (?, ?, ?, ?);
+
+-- Update a point allocation
+updateAllocation:
+UPDATE PointAllocation
+SET name = ?,
+    description = ?,
+    totalPoints = ?,
+    period = ?,
+    startDate = ?,
+    endDate = ?,
+    isActive = ?
+WHERE id = ?;
+
+-- Update an allocation item
+updateAllocationItem:
+UPDATE PointAllocationItem
+SET points = ?
+WHERE id = ?;
+
+-- Delete a point allocation (will cascade to items)
+deleteAllocation:
+DELETE FROM PointAllocation
+WHERE id = ?;
+
+-- Delete an allocation item
+deleteAllocationItem:
+DELETE FROM PointAllocationItem
+WHERE id = ?;
+
+-- Delete all items for an allocation
+deleteAllItemsForAllocation:
+DELETE FROM PointAllocationItem
+WHERE allocationId = ?;
+
+-- Set all allocations to inactive
+deactivateAllAllocations:
+UPDATE PointAllocation
+SET isActive = 0;
+
+-- Set a specific allocation to active
+activateAllocation:
+UPDATE PointAllocation
+SET isActive = 1
+WHERE id = ?;

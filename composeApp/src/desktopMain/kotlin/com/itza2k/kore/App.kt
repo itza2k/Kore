@@ -1,5 +1,6 @@
 package com.itza2k.kore
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -7,11 +8,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.itza2k.kore.db.DatabaseFactory
+import com.itza2k.kore.db.DatabaseHelper
 import com.itza2k.kore.navigation.Screen
 import com.itza2k.kore.navigation.rememberNavigationState
 import com.itza2k.kore.theme.KoreTheme
@@ -41,8 +46,13 @@ fun App() {
         initialScreen = if (hasCompletedOnboarding) Screen.DASHBOARD else Screen.ONBOARDING
     )
 
+    // Initialize database
+    val database = remember { DatabaseFactory.createDatabase() }
+    val databaseHelper = remember { DatabaseHelper(database) }
+
     CompositionLocalProvider(LocalViewModelStoreOwner provides viewModelStoreOwner) {
-        val viewModel: KoreViewModel = viewModel()
+        // Create ViewModel with DatabaseHelper
+        val viewModel = remember { KoreViewModel(databaseHelper) }
 
         KoreTheme {
             Surface(
@@ -51,6 +61,7 @@ fun App() {
             ) {
                 if (navigationState.currentScreen.value == Screen.ONBOARDING) {
                     OnboardingScreen(
+                        viewModel = viewModel,
                         onComplete = {
                             hasCompletedOnboarding = true
                             navigationState.navigateTo(Screen.DASHBOARD)
@@ -100,6 +111,22 @@ fun MainScreen(viewModel: KoreViewModel, navigationState: com.itza2k.kore.naviga
                     label = { Text(title) }
                 )
             }
+
+            // Add spacer to push attribution to bottom
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Subtle attribution
+            Text(
+                text = "itza2k",
+                fontSize = 8.sp,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier
+                    .padding(bottom = 4.dp)
+                    .clickable { 
+                        openUrl("https://itza2k.github.io/") 
+                    }
+            )
         }
 
         // Main content

@@ -11,7 +11,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.itza2k.kore.api.GeminiApiService
 import com.itza2k.kore.viewmodel.KoreViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun AiScreen(viewModel: KoreViewModel) {
@@ -20,10 +22,14 @@ fun AiScreen(viewModel: KoreViewModel) {
     var passwordVisible by remember { mutableStateOf(false) }
     var showApiKeyDialog by remember { mutableStateOf(false) }
     var isApiKeySet by remember { mutableStateOf(false) }
-    var selectedLlm by remember { mutableStateOf("Gemini") }
+    // Using only Gemini as the LLM provider
     var aiResponse by remember { mutableStateOf("") }
     var userQuery by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+
+    val coroutineScope = rememberCoroutineScope()
+    val geminiApiService = remember { GeminiApiService() }
 
     Column(
         modifier = Modifier
@@ -71,48 +77,7 @@ fun AiScreen(viewModel: KoreViewModel) {
                 }
             }
         } else {
-            // LLM Selection
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Select LLM Provider",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        LlmSelectionChip(
-                            name = "Gemini",
-                            selected = selectedLlm == "Gemini",
-                            onSelected = { selectedLlm = "Gemini" }
-                        )
-
-                        LlmSelectionChip(
-                            name = "OpenAI",
-                            selected = selectedLlm == "OpenAI",
-                            onSelected = { selectedLlm = "OpenAI" }
-                        )
-
-                        LlmSelectionChip(
-                            name = "Anthropic",
-                            selected = selectedLlm == "Anthropic",
-                            onSelected = { selectedLlm = "Anthropic" }
-                        )
-                    }
-                }
-            }
-
+            // Using Gemini as the LLM provider
             Spacer(modifier = Modifier.height(16.dp))
 
             // AI Chat Interface
@@ -134,7 +99,7 @@ fun AiScreen(viewModel: KoreViewModel) {
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        if (aiResponse.isEmpty() && !isLoading) {
+                        if (aiResponse.isEmpty() && !isLoading && errorMessage.isEmpty()) {
                             Text(
                                 text = "Ask me anything about your habits, goals, or how to improve your productivity and sustainability practices.",
                                 style = MaterialTheme.typography.bodyMedium
@@ -142,6 +107,12 @@ fun AiScreen(viewModel: KoreViewModel) {
                         } else if (isLoading) {
                             CircularProgressIndicator(
                                 modifier = Modifier.align(Alignment.CenterHorizontally)
+                            )
+                        } else if (errorMessage.isNotEmpty()) {
+                            Text(
+                                text = "Error: $errorMessage",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error
                             )
                         } else {
                             Text(
@@ -164,10 +135,36 @@ fun AiScreen(viewModel: KoreViewModel) {
 
                         Button(
                             onClick = {
-                                if (userQuery.isNotEmpty()) {
+                                if (userQuery.isNotEmpty() && apiKey.isNotEmpty()) {
                                     isLoading = true
-                                    aiResponse = "Based on your habits and goals, I recommend focusing on consistency with your daily routines. Your eco-friendly habits are making a positive impact!"
-                                    isLoading = false
+                                    errorMessage = ""
+
+                                    // Create a context-aware prompt that includes user data
+                                    val habits = viewModel.habits.joinToString(", ") { it.name }
+                                    val goals = viewModel.goals.joinToString(", ") { it.name }
+                                    val contextPrompt = """
+                                        As an AI assistant for a productivity and sustainability app, help the user with their query.
+
+                                        User's habits: $habits
+                                        User's goals: $goals
+                                        Total points: ${viewModel.totalPoints}
+
+                                        User query: $userQuery
+                                    """.trimIndent()
+
+                                    coroutineScope.launch {
+                                        // Using Gemini API
+                                        geminiApiService.generateContent(contextPrompt, apiKey)
+                                            .onSuccess { response ->
+                                                aiResponse = response
+                                            }
+                                            .onFailure { error ->
+                                                errorMessage = error.message ?: "Unknown error occurred"
+                                            }
+                                        isLoading = false
+                                    }
+                                } else if (apiKey.isEmpty()) {
+                                    errorMessage = "Please set your API key first"
                                 }
                             },
                             modifier = Modifier.align(Alignment.End)
@@ -181,14 +178,26 @@ fun AiScreen(viewModel: KoreViewModel) {
             Spacer(modifier = Modifier.height(16.dp))
 
             // Reset API Key Button
-            OutlinedButton(
-                onClick = { 
-                    isApiKeySet = false
-                    apiKey = ""
-                },
-                modifier = Modifier.align(Alignment.End)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Reset API Key")
+                if (errorMessage.isNotEmpty()) {
+                    OutlinedButton(
+                        onClick = { errorMessage = "" }
+                    ) {
+                        Text("Clear Error")
+                    }
+                }
+
+                OutlinedButton(
+                    onClick = { 
+                        isApiKeySet = false
+                        apiKey = ""
+                    }
+                ) {
+                    Text("Reset API Key")
+                }
             }
         }
     }
@@ -267,19 +276,4 @@ fun AiHeader() {
     }
 }
 
-@Composable
-fun LlmSelectionChip(
-    name: String,
-    selected: Boolean,
-    onSelected: () -> Unit
-) {
-    FilterChip(
-        selected = selected,
-        onClick = onSelected,
-        label = { Text(name) },
-        colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-    )
-}
+// LlmSelectionChip removed as we're only using Gemini

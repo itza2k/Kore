@@ -20,7 +20,7 @@ import java.util.*
 @Composable
 fun InsightsScreen(viewModel: KoreViewModel) {
     val scrollState = rememberScrollState()
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -33,7 +33,7 @@ fun InsightsScreen(viewModel: KoreViewModel) {
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 16.dp)
         )
-        
+
         // Overview section
         InsightSection(
             title = "Overview",
@@ -41,9 +41,9 @@ fun InsightsScreen(viewModel: KoreViewModel) {
                 OverviewInsights(viewModel)
             }
         )
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         // Habits section
         InsightSection(
             title = "Habits",
@@ -51,9 +51,9 @@ fun InsightsScreen(viewModel: KoreViewModel) {
                 HabitInsights(viewModel)
             }
         )
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         // Goals section
         InsightSection(
             title = "Goals",
@@ -61,9 +61,9 @@ fun InsightsScreen(viewModel: KoreViewModel) {
                 GoalInsights(viewModel)
             }
         )
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         // Activities section
         InsightSection(
             title = "Activities",
@@ -90,7 +90,7 @@ fun InsightSection(
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
-            
+
             content()
         }
     }
@@ -111,15 +111,15 @@ fun OverviewInsights(viewModel: KoreViewModel) {
                 text = "Total Points",
                 style = MaterialTheme.typography.titleMedium
             )
-            
+
             Text(
                 text = "${viewModel.totalPoints}",
                 style = MaterialTheme.typography.headlineSmall
             )
         }
-        
-        Divider(modifier = Modifier.padding(vertical = 8.dp))
-        
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
         // Stats grid
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -130,22 +130,22 @@ fun OverviewInsights(viewModel: KoreViewModel) {
                 value = viewModel.habits.size.toString(),
                 modifier = Modifier.weight(1f)
             )
-            
+
             StatCard(
                 title = "Goals",
                 value = viewModel.goals.size.toString(),
                 modifier = Modifier.weight(1f)
             )
-            
+
             StatCard(
                 title = "Activities",
                 value = viewModel.activities.size.toString(),
                 modifier = Modifier.weight(1f)
             )
         }
-        
-        Divider(modifier = Modifier.padding(vertical = 8.dp))
-        
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
         // Eco-friendly stats
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -156,35 +156,32 @@ fun OverviewInsights(viewModel: KoreViewModel) {
                 text = "Eco-Friendly Habits",
                 style = MaterialTheme.typography.titleMedium
             )
-            
+
             Text(
                 text = "${viewModel.habits.count { it.isEcoFriendly }}",
                 style = MaterialTheme.typography.headlineSmall
             )
         }
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
-        // Estimated carbon savings
+
+        // Eco-friendly activities count
         val ecoFriendlyActivities = viewModel.activities.count { activity ->
             viewModel.habits.find { it.id == activity.habitId }?.isEcoFriendly == true
         }
-        
-        // Rough estimate: 1kg CO2 saved per eco-friendly activity
-        val carbonSavings = ecoFriendlyActivities * 1.0
-        
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Estimated Carbon Savings",
+                text = "Eco-Friendly Activities Completed",
                 style = MaterialTheme.typography.titleMedium
             )
-            
+
             Text(
-                text = "$carbonSavings kg CO2",
+                text = "$ecoFriendlyActivities",
                 style = MaterialTheme.typography.headlineSmall
             )
         }
@@ -202,7 +199,7 @@ fun HabitInsights(viewModel: KoreViewModel) {
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        
+
         if (viewModel.habits.isEmpty()) {
             Text(
                 text = "No habits yet",
@@ -213,7 +210,7 @@ fun HabitInsights(viewModel: KoreViewModel) {
             val topHabits = viewModel.habits
                 .sortedByDescending { it.streak }
                 .take(3)
-            
+
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -228,7 +225,7 @@ fun HabitInsights(viewModel: KoreViewModel) {
                             text = habit.name,
                             style = MaterialTheme.typography.bodyMedium
                         )
-                        
+
                         Text(
                             text = "${habit.streak} days",
                             style = MaterialTheme.typography.bodyMedium
@@ -237,16 +234,16 @@ fun HabitInsights(viewModel: KoreViewModel) {
                 }
             }
         }
-        
-        Divider(modifier = Modifier.padding(vertical = 8.dp))
-        
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
         // Habit categories
         Text(
             text = "Habit Categories",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        
+
         if (viewModel.habits.isEmpty()) {
             Text(
                 text = "No habits yet",
@@ -261,7 +258,7 @@ fun HabitInsights(viewModel: KoreViewModel) {
                 .mapValues { it.value.size }
                 .toList()
                 .sortedByDescending { it.second }
-            
+
             if (categories.isEmpty()) {
                 Text(
                     text = "No categories defined",
@@ -283,7 +280,7 @@ fun HabitInsights(viewModel: KoreViewModel) {
                                 text = category,
                                 style = MaterialTheme.typography.bodyMedium
                             )
-                            
+
                             Text(
                                 text = "$count habits",
                                 style = MaterialTheme.typography.bodyMedium
@@ -307,7 +304,7 @@ fun GoalInsights(viewModel: KoreViewModel) {
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        
+
         if (viewModel.goals.isEmpty()) {
             Text(
                 text = "No goals yet",
@@ -322,18 +319,18 @@ fun GoalInsights(viewModel: KoreViewModel) {
             } else {
                 0f
             }
-            
+
             Text(
                 text = "$completedGoals of $totalGoals goals completed (${progressPercentage.toInt()}%)",
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-            
+
             LinearProgressIndicator(
                 progress = { if (totalGoals > 0) completedGoals.toFloat() / totalGoals else 0f },
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
             )
-            
+
             // Goals list
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -348,9 +345,9 @@ fun GoalInsights(viewModel: KoreViewModel) {
                             progress = { goal.progress },
                             modifier = Modifier.weight(1f)
                         )
-                        
+
                         Spacer(modifier = Modifier.width(8.dp))
-                        
+
                         Text(
                             text = goal.name,
                             style = MaterialTheme.typography.bodyMedium
@@ -374,7 +371,7 @@ fun ActivityInsights(viewModel: KoreViewModel) {
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        
+
         if (viewModel.activities.isEmpty()) {
             Text(
                 text = "No activities yet",
@@ -385,17 +382,17 @@ fun ActivityInsights(viewModel: KoreViewModel) {
             // Group activities by day
             val calendar = Calendar.getInstance()
             val dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
-            
+
             val activitiesByDay = viewModel.activities.groupBy { activity ->
                 calendar.timeInMillis = activity.timestamp
                 dateFormat.format(calendar.time)
             }
-            
+
             // Calculate points earned per day
             val pointsByDay = activitiesByDay.mapValues { (_, activities) ->
                 activities.sumOf { it.pointsEarned + it.bonusPoints }
             }
-            
+
             // Display points by day
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -411,7 +408,7 @@ fun ActivityInsights(viewModel: KoreViewModel) {
                             text = day,
                             style = MaterialTheme.typography.bodyMedium
                         )
-                        
+
                         Text(
                             text = "$points points",
                             style = MaterialTheme.typography.bodyMedium
@@ -420,16 +417,16 @@ fun ActivityInsights(viewModel: KoreViewModel) {
                 }
             }
         }
-        
-        Divider(modifier = Modifier.padding(vertical = 8.dp))
-        
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
         // Recent activities
         Text(
             text = "Recent Activities",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        
+
         if (viewModel.activities.isEmpty()) {
             Text(
                 text = "No activities yet",
@@ -455,7 +452,7 @@ fun ActivityInsights(viewModel: KoreViewModel) {
                                     text = habit.name,
                                     style = MaterialTheme.typography.bodyMedium
                                 )
-                                
+
                                 Text(
                                     text = "${activity.pointsEarned + activity.bonusPoints} points",
                                     style = MaterialTheme.typography.bodyMedium
@@ -478,7 +475,7 @@ fun StatCard(title: String, value: String, modifier: Modifier = Modifier) {
             text = value,
             style = MaterialTheme.typography.headlineSmall
         )
-        
+
         Text(
             text = title,
             style = MaterialTheme.typography.bodyMedium

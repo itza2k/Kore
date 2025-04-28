@@ -3,8 +3,10 @@ package com.itza2k.kore.db
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import com.itza2k.kore.data.Activity
+import com.itza2k.kore.data.AllocationPeriod
 import com.itza2k.kore.data.Goal
 import com.itza2k.kore.data.Habit
+import com.itza2k.kore.data.PointAllocation
 import com.itza2k.kore.data.Reward
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -200,7 +202,7 @@ class DatabaseHelper(private val database: KoreDatabase) {
             progress = goal.progress.toDouble(),
             isCompleted = if (goal.isCompleted) 1L else 0L
         )
-        
+
         // Add habit relationships
         goal.relatedHabitIds.forEach { habitId ->
             database.goalQueries.addHabitToGoal(goal.id, habitId)
@@ -281,5 +283,130 @@ class DatabaseHelper(private val database: KoreDatabase) {
 
     suspend fun deleteReward(id: String) {
         database.rewardQueries.deleteReward(id)
+    }
+
+    // PointAllocation operations
+    fun getAllPointAllocations(): Flow<List<PointAllocation>> {
+        return database.pointAllocationQueries.selectAll()
+            .asFlow()
+            .mapToList(Dispatchers.IO)
+            .map { allocationList ->
+                allocationList.map { allocation ->
+                    PointAllocation(
+                        id = allocation.id,
+                        name = allocation.name,
+                        description = allocation.description,
+                        totalPoints = allocation.totalPoints.toInt(),
+                        period = AllocationPeriod.valueOf(allocation.period),
+                        startDate = allocation.startDate,
+                        endDate = allocation.endDate,
+                        isActive = allocation.isActive == 1L,
+                        allocations = getAllocationItems(allocation.id)
+                    )
+                }
+            }
+    }
+
+    fun getActivePointAllocation(): Flow<PointAllocation?> {
+        return database.pointAllocationQueries.selectActive()
+            .asFlow()
+            .mapToList(Dispatchers.IO)
+            .map { allocationList ->
+                allocationList.firstOrNull()?.let { allocation ->
+                    PointAllocation(
+                        id = allocation.id,
+                        name = allocation.name,
+                        description = allocation.description,
+                        totalPoints = allocation.totalPoints.toInt(),
+                        period = AllocationPeriod.valueOf(allocation.period),
+                        startDate = allocation.startDate,
+                        endDate = allocation.endDate,
+                        isActive = allocation.isActive == 1L,
+                        allocations = getAllocationItems(allocation.id)
+                    )
+                }
+            }
+    }
+
+    private suspend fun getAllocationItems(allocationId: String): Map<String, Int> {
+        val items = database.pointAllocationQueries.selectItemsForAllocation(allocationId)
+            .executeAsList()
+
+        return items.associate { item ->
+            item.habitId to item.points.toInt()
+        }
+    }
+
+    suspend fun insertPointAllocation(pointAllocation: PointAllocation) {
+        // First deactivate all allocations if this one is active
+        if (pointAllocation.isActive) {
+            database.pointAllocationQueries.deactivateAllAllocations()
+        }
+
+        // Insert the allocation
+        database.pointAllocationQueries.insertAllocation(
+            id = pointAllocation.id,
+            name = pointAllocation.name,
+            description = pointAllocation.description,
+            totalPoints = pointAllocation.totalPoints.toLong(),
+            period = pointAllocation.period.name,
+            startDate = pointAllocation.startDate,
+            endDate = pointAllocation.endDate,
+            isActive = if (pointAllocation.isActive) 1L else 0L
+        )
+
+        // Insert all allocation items
+        pointAllocation.allocations.forEach { (habitId, points) ->
+            database.pointAllocationQueries.insertAllocationItem(
+                id = UUID.randomUUID().toString(),
+                allocationId = pointAllocation.id,
+                habitId = habitId,
+                points = points.toLong()
+            )
+        }
+    }
+
+    suspend fun updatePointAllocation(pointAllocation: PointAllocation) {
+        // First deactivate all allocations if this one is active
+        if (pointAllocation.isActive) {
+            database.pointAllocationQueries.deactivateAllAllocations()
+        }
+
+        // Update the allocation
+        database.pointAllocationQueries.updateAllocation(
+            name = pointAllocation.name,
+            description = pointAllocation.description,
+            totalPoints = pointAllocation.totalPoints.toLong(),
+            period = pointAllocation.period.name,
+            startDate = pointAllocation.startDate,
+            endDate = pointAllocation.endDate,
+            isActive = if (pointAllocation.isActive) 1L else 0L,
+            id = pointAllocation.id
+        )
+
+        // Delete all existing items and insert new ones
+        database.pointAllocationQueries.deleteAllItemsForAllocation(pointAllocation.id)
+
+        // Insert all allocation items
+        pointAllocation.allocations.forEach { (habitId, points) ->
+            database.pointAllocationQueries.insertAllocationItem(
+                id = UUID.randomUUID().toString(),
+                allocationId = pointAllocation.id,
+                habitId = habitId,
+                points = points.toLong()
+            )
+        }
+    }
+
+    suspend fun activatePointAllocation(id: String) {
+        // First deactivate all allocations
+        database.pointAllocationQueries.deactivateAllAllocations()
+
+        // Then activate the specified allocation
+        database.pointAllocationQueries.activateAllocation(id)
+    }
+
+    suspend fun deletePointAllocation(id: String) {
+        database.pointAllocationQueries.deleteAllocation(id)
     }
 }

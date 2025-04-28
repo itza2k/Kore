@@ -12,9 +12,8 @@ import com.itza2k.kore.viewmodel.KoreViewModel
 
 
 @Composable
-fun OnboardingScreen(onComplete: () -> Unit) {
+fun OnboardingScreen(viewModel: KoreViewModel, onComplete: () -> Unit) {
     var currentStep by remember { mutableStateOf(0) }
-    val viewModel: KoreViewModel = viewModel()
 
     val steps = listOf(
         "Welcome" to @Composable { WelcomeStep { currentStep++ } },
@@ -103,25 +102,40 @@ fun WelcomeStep(onNext: () -> Unit) {
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
-        Text(
-            text = "Kore helps you align your daily activities with long-term goals through a personal economy system while promoting sustainable living practices.",
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp)
-        )
-
-        Button(
-            onClick = onNext,
-            modifier = Modifier.padding(top = 32.dp)
+        Card(
+            modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
         ) {
-            Text("Let's Get Started")
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Kore helps you:",
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Text(
+                    text = "• Track and reward your daily habits\n" +
+                           "• Set and achieve meaningful goals\n" +
+                           "• Create a personal reward system\n" +
+                           "• Get AI-powered insights for improvement\n" +
+                           "• Live more sustainably",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
         }
     }
 }
 
 @Composable
 fun GoalsStep(viewModel: KoreViewModel, onNext: () -> Unit) {
-    // Implementation will be added later
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -138,14 +152,39 @@ fun GoalsStep(viewModel: KoreViewModel, onNext: () -> Unit) {
             text = "Goals help you track your progress and stay motivated.",
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 32.dp)
+            modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        Button(
-            onClick = onNext,
-            modifier = Modifier.padding(top = 32.dp)
+        Card(
+            modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer
+            )
         ) {
-            Text("Continue")
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "Example Goals:",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Text(
+                    text = "• Exercise 3 times per week\n" +
+                           "• Read for 30 minutes daily\n" +
+                           "• Reduce plastic waste by 50%\n" +
+                           "• Learn a new skill this month",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(start = 16.dp, top = 8.dp)
+                )
+
+                Text(
+                    text = "You'll be able to add specific goals in the Goals section after setup.",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+            }
         }
     }
 }
@@ -153,7 +192,6 @@ fun GoalsStep(viewModel: KoreViewModel, onNext: () -> Unit) {
 
 @Composable
 fun HabitsStep(viewModel: KoreViewModel, onNext: () -> Unit) {
-    // Implementation will be added later
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -170,21 +208,76 @@ fun HabitsStep(viewModel: KoreViewModel, onNext: () -> Unit) {
             text = "Habits are the daily activities that help you achieve your goals.",
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 32.dp)
+            modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        Button(
-            onClick = onNext,
-            modifier = Modifier.padding(top = 32.dp)
+        Card(
+            modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+            )
         ) {
-            Text("Continue")
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Habit",
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = "Points",
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.width(80.dp)
+                    )
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                HabitRow("Morning meditation", 20)
+                HabitRow("Drink 8 glasses of water", 15)
+                HabitRow("Use reusable shopping bags", 30, isEco = true)
+                HabitRow("Walk instead of drive", 40, isEco = true)
+
+                Text(
+                    text = "Eco-friendly habits earn bonus points!",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+            }
         }
     }
 }
 
 @Composable
+private fun HabitRow(name: String, points: Int, isEco: Boolean = false) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = name + if (isEco) " 🌱" else "",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = "+$points",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.width(80.dp)
+        )
+    }
+}
+
+@Composable
 fun RewardsStep(viewModel: KoreViewModel, onNext: () -> Unit) {
-    // Implementation will be added later
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -201,16 +294,68 @@ fun RewardsStep(viewModel: KoreViewModel, onNext: () -> Unit) {
             text = "Rewards are what you earn by completing habits and achieving goals.",
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 32.dp)
+            modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        Button(
-            onClick = onNext,
-            modifier = Modifier.padding(top = 32.dp)
+        Card(
+            modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
         ) {
-            Text("Continue")
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "Weekly Reward System",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Text(
+                    text = "You'll be able to allocate weekly reward points to different tasks and habits. As you complete them, you'll earn points that can be redeemed for rewards you define.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Text(
+                    text = "Example Rewards:",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    RewardChip("Movie night", 100)
+                    RewardChip("New book", 200)
+                    RewardChip("Coffee treat", 50)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    RewardChip("Gaming time", 75)
+                    RewardChip("Dessert", 60)
+                    RewardChip("Day off", 300)
+                }
+            }
         }
     }
+}
+
+@Composable
+private fun RewardChip(name: String, cost: Int) {
+    SuggestionChip(
+        onClick = { },
+        label = { 
+            Text("$name ($cost pts)")
+        }
+    )
 }
 
 
@@ -228,18 +373,41 @@ fun CompleteStep(onComplete: () -> Unit) {
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        Text(
-            text = "You're ready to start using Kore to improve your productivity and live more sustainably.",
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
-
-        Button(
-            onClick = onComplete,
-            modifier = Modifier.padding(top = 32.dp)
+        Card(
+            modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
         ) {
-            Text("Get Started")
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "What's Next?",
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Text(
+                    text = "• Add your specific goals in the Goals section\n" +
+                           "• Create your daily habits in the Habits section\n" +
+                           "• Define your personal rewards in the Rewards section\n" +
+                           "• Track your progress in the Dashboard\n" +
+                           "• Get AI-powered insights to improve your habits",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
+                )
+
+                Text(
+                    text = "Your data will be saved automatically, so you can pick up right where you left off.",
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
         }
     }
 }

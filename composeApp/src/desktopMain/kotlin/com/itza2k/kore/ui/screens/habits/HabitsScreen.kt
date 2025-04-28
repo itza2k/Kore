@@ -17,8 +17,10 @@ import java.util.UUID
 @Composable
 fun HabitsScreen(viewModel: KoreViewModel) {
     var showAddHabitDialog by remember { mutableStateOf(false) }
+    var showEditHabitDialog by remember { mutableStateOf(false) }
+    var habitToEdit by remember { mutableStateOf<Habit?>(null) }
     var selectedCategory by remember { mutableStateOf("All") }
-    
+
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp)
     ) {
@@ -32,23 +34,23 @@ fun HabitsScreen(viewModel: KoreViewModel) {
                 text = "My Habits",
                 style = MaterialTheme.typography.headlineMedium
             )
-            
+
             Button(
                 onClick = { showAddHabitDialog = true }
             ) {
                 Text("Add Habit")
             }
         }
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // Category filter
         val categories = listOf("All") + viewModel.habits
             .map { it.category }
             .filter { it.isNotEmpty() }
             .distinct()
             .sorted()
-        
+
         if (categories.size > 1) {
             ScrollableTabRow(
                 selectedTabIndex = categories.indexOf(selectedCategory),
@@ -62,10 +64,10 @@ fun HabitsScreen(viewModel: KoreViewModel) {
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
         }
-        
+
         // Habits list
         if (viewModel.habits.isEmpty()) {
             Box(
@@ -80,13 +82,13 @@ fun HabitsScreen(viewModel: KoreViewModel) {
                         style = MaterialTheme.typography.headlineSmall,
                         textAlign = TextAlign.Center
                     )
-                    
+
                     Text(
                         text = "Add some habits to get started on your journey.",
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center
                     )
-                    
+
                     Button(
                         onClick = { showAddHabitDialog = true },
                         modifier = Modifier.padding(top = 16.dp)
@@ -101,7 +103,7 @@ fun HabitsScreen(viewModel: KoreViewModel) {
             } else {
                 viewModel.habits.filter { it.category == selectedCategory }
             }
-            
+
             if (filteredHabits.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -122,6 +124,10 @@ fun HabitsScreen(viewModel: KoreViewModel) {
                         HabitDetailCard(
                             habit = habit,
                             onComplete = { viewModel.completeHabit(habit) },
+                            onEdit = { 
+                                habitToEdit = it
+                                showEditHabitDialog = true
+                            },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -129,12 +135,24 @@ fun HabitsScreen(viewModel: KoreViewModel) {
             }
         }
     }
-    
+
     // Add habit dialog
     if (showAddHabitDialog) {
         AddHabitDialog(
             viewModel = viewModel,
             onDismiss = { showAddHabitDialog = false }
+        )
+    }
+
+    // Edit habit dialog
+    if (showEditHabitDialog && habitToEdit != null) {
+        EditHabitDialog(
+            habit = habitToEdit!!,
+            viewModel = viewModel,
+            onDismiss = { 
+                showEditHabitDialog = false
+                habitToEdit = null
+            }
         )
     }
 }
@@ -146,7 +164,7 @@ fun AddHabitDialog(viewModel: KoreViewModel, onDismiss: () -> Unit) {
     var points by remember { mutableStateOf("10") }
     var category by remember { mutableStateOf("") }
     var isEcoFriendly by remember { mutableStateOf(false) }
-    
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Add New Habit") },
@@ -161,28 +179,28 @@ fun AddHabitDialog(viewModel: KoreViewModel, onDismiss: () -> Unit) {
                     label = { Text("Name") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                
+
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
                     label = { Text("Description") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                
+
                 OutlinedTextField(
                     value = points,
                     onValueChange = { points = it.filter { char -> char.isDigit() } },
                     label = { Text("Points") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                
+
                 OutlinedTextField(
                     value = category,
                     onValueChange = { category = it },
                     label = { Text("Category (optional)") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -190,7 +208,7 @@ fun AddHabitDialog(viewModel: KoreViewModel, onDismiss: () -> Unit) {
                         checked = isEcoFriendly,
                         onCheckedChange = { isEcoFriendly = it }
                     )
-                    
+
                     Text("Eco-friendly (earns bonus points)")
                 }
             }
@@ -224,7 +242,135 @@ fun AddHabitDialog(viewModel: KoreViewModel, onDismiss: () -> Unit) {
 }
 
 @Composable
-fun HabitDetailCard(habit: Habit, onComplete: () -> Unit, modifier: Modifier = Modifier) {
+fun EditHabitDialog(habit: Habit, viewModel: KoreViewModel, onDismiss: () -> Unit) {
+    var name by remember { mutableStateOf(habit.name) }
+    var description by remember { mutableStateOf(habit.description) }
+    var points by remember { mutableStateOf(habit.basePoints.toString()) }
+    var category by remember { mutableStateOf(habit.category) }
+    var isEcoFriendly by remember { mutableStateOf(habit.isEcoFriendly) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Habit") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = points,
+                    onValueChange = { points = it.filter { char -> char.isDigit() } },
+                    label = { Text("Points") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = category,
+                    onValueChange = { category = it },
+                    label = { Text("Category (optional)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = isEcoFriendly,
+                        onCheckedChange = { isEcoFriendly = it }
+                    )
+
+                    Text("Eco-friendly (earns bonus points)")
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(
+                    onClick = { showDeleteConfirmation = true },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    ),
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Delete Habit")
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (name.isNotBlank() && points.isNotBlank()) {
+                        val updatedHabit = habit.copy(
+                            name = name,
+                            description = description,
+                            basePoints = points.toIntOrNull() ?: 10,
+                            category = category,
+                            isEcoFriendly = isEcoFriendly
+                        )
+                        viewModel.updateHabit(updatedHabit)
+                        onDismiss()
+                    }
+                }
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = { Text("Delete Habit") },
+            text = { Text("Are you sure you want to delete this habit? This action cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteHabit(habit.id)
+                        showDeleteConfirmation = false
+                        onDismiss()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun HabitDetailCard(
+    habit: Habit, 
+    onComplete: () -> Unit, 
+    onEdit: (Habit) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
@@ -249,7 +395,7 @@ fun HabitDetailCard(habit: Habit, onComplete: () -> Unit, modifier: Modifier = M
                         text = habit.name,
                         style = MaterialTheme.typography.titleLarge
                     )
-                    
+
                     if (habit.category.isNotEmpty()) {
                         Text(
                             text = habit.category,
@@ -257,7 +403,7 @@ fun HabitDetailCard(habit: Habit, onComplete: () -> Unit, modifier: Modifier = M
                         )
                     }
                 }
-                
+
                 if (habit.isEcoFriendly) {
                     Badge(
                         containerColor = MaterialTheme.colorScheme.primary
@@ -270,16 +416,16 @@ fun HabitDetailCard(habit: Habit, onComplete: () -> Unit, modifier: Modifier = M
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Text(
                 text = habit.description,
                 style = MaterialTheme.typography.bodyMedium
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -290,14 +436,14 @@ fun HabitDetailCard(habit: Habit, onComplete: () -> Unit, modifier: Modifier = M
                         text = "Points: ${habit.currentPoints}",
                         style = MaterialTheme.typography.bodySmall
                     )
-                    
+
                     if (habit.streak > 0) {
                         Text(
                             text = "Streak: ${habit.streak} days",
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
-                    
+
                     if (habit.progressLevel > 1) {
                         Text(
                             text = "Level: ${habit.progressLevel}",
@@ -305,12 +451,24 @@ fun HabitDetailCard(habit: Habit, onComplete: () -> Unit, modifier: Modifier = M
                         )
                     }
                 }
-                
-                Button(
-                    onClick = onComplete,
-                    enabled = !habit.completedToday
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(if (habit.completedToday) "Completed" else "Complete")
+                    // Edit button
+                    OutlinedButton(
+                        onClick = { onEdit(habit) }
+                    ) {
+                        Text("Edit")
+                    }
+
+                    // Complete button
+                    Button(
+                        onClick = onComplete,
+                        enabled = !habit.completedToday
+                    ) {
+                        Text(if (habit.completedToday) "Completed" else "Complete")
+                    }
                 }
             }
         }
