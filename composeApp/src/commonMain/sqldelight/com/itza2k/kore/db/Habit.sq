@@ -1,0 +1,87 @@
+CREATE TABLE Habit (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    basePoints INTEGER NOT NULL,
+    currentPoints INTEGER NOT NULL,
+    isEcoFriendly INTEGER NOT NULL DEFAULT 0,
+    completedToday INTEGER NOT NULL DEFAULT 0,
+    streak INTEGER NOT NULL DEFAULT 0,
+    lastCompletedDate INTEGER NOT NULL DEFAULT 0,
+    category TEXT NOT NULL DEFAULT '',
+    progressLevel INTEGER NOT NULL DEFAULT 1,
+    goalProgress REAL NOT NULL DEFAULT 0.0
+);
+
+-- Get all habits
+selectAll:
+SELECT *
+FROM Habit
+ORDER BY name;
+
+-- Get a specific habit
+selectById:
+SELECT *
+FROM Habit
+WHERE id = ?;
+
+-- Get habits by category
+selectByCategory:
+SELECT *
+FROM Habit
+WHERE category = ?
+ORDER BY name;
+
+-- Get habits that are completed today
+selectCompletedToday:
+SELECT *
+FROM Habit
+WHERE completedToday = 1
+ORDER BY name;
+
+-- Get habits that are not completed today
+selectNotCompletedToday:
+SELECT *
+FROM Habit
+WHERE completedToday = 0
+ORDER BY name;
+
+-- Insert a new habit
+insert:
+INSERT INTO Habit(id, name, description, basePoints, currentPoints, isEcoFriendly, completedToday, streak, lastCompletedDate, category, progressLevel, goalProgress)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- Update a habit
+update:
+UPDATE Habit
+SET name = ?,
+    description = ?,
+    basePoints = ?,
+    currentPoints = ?,
+    isEcoFriendly = ?,
+    completedToday = ?,
+    streak = ?,
+    lastCompletedDate = ?,
+    category = ?,
+    progressLevel = ?,
+    goalProgress = ?
+WHERE id = ?;
+
+-- Mark a habit as completed
+markCompleted:
+UPDATE Habit
+SET completedToday = 1,
+    streak = streak + 1,
+    lastCompletedDate = ?,
+    currentPoints = ?
+WHERE id = ?;
+
+-- Reset completed today status for all habits
+resetCompletedToday:
+UPDATE Habit
+SET completedToday = 0;
+
+-- Delete a habit
+delete:
+DELETE FROM Habit
+WHERE id = ?;
