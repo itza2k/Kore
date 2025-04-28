@@ -1,0 +1,87 @@
+CREATE TABLE Reward (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    pointsCost INTEGER NOT NULL,
+    category TEXT NOT NULL DEFAULT '',
+    isEcoFriendly INTEGER NOT NULL DEFAULT 0
+);
+
+-- Table to track redeemed rewards
+CREATE TABLE RewardRedemption (
+    id TEXT NOT NULL PRIMARY KEY,
+    rewardId TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    pointsSpent INTEGER NOT NULL,
+    FOREIGN KEY (rewardId) REFERENCES Reward(id) ON DELETE CASCADE
+);
+
+-- Get all rewards
+selectAll:
+SELECT *
+FROM Reward
+ORDER BY pointsCost, name;
+
+-- Get a specific reward
+selectById:
+SELECT *
+FROM Reward
+WHERE id = ?;
+
+-- Get rewards by category
+selectByCategory:
+SELECT *
+FROM Reward
+WHERE category = ?
+ORDER BY pointsCost, name;
+
+-- Get eco-friendly rewards
+selectEcoFriendly:
+SELECT *
+FROM Reward
+WHERE isEcoFriendly = 1
+ORDER BY pointsCost, name;
+
+-- Get all reward redemptions
+selectAllRedemptions:
+SELECT r.*, rr.id AS redemptionId, rr.timestamp, rr.pointsSpent
+FROM RewardRedemption rr
+JOIN Reward r ON rr.rewardId = r.id
+ORDER BY rr.timestamp DESC;
+
+-- Get redemptions for a specific reward
+selectRedemptionsForReward:
+SELECT *
+FROM RewardRedemption
+WHERE rewardId = ?
+ORDER BY timestamp DESC;
+
+-- Insert a new reward
+insertReward:
+INSERT INTO Reward(id, name, description, pointsCost, category, isEcoFriendly)
+VALUES (?, ?, ?, ?, ?, ?);
+
+-- Update a reward
+updateReward:
+UPDATE Reward
+SET name = ?,
+    description = ?,
+    pointsCost = ?,
+    category = ?,
+    isEcoFriendly = ?
+WHERE id = ?;
+
+-- Record a reward redemption
+redeemReward:
+INSERT INTO RewardRedemption(id, rewardId, timestamp, pointsSpent)
+VALUES (?, ?, ?, ?);
+
+-- Delete a reward
+deleteReward:
+DELETE FROM Reward
+WHERE id = ?;
+
+-- Delete a redemption
+deleteRedemption:
+DELETE FROM RewardRedemption
+WHERE id = ?;
