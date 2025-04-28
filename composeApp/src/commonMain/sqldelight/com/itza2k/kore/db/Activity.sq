@@ -1,0 +1,36 @@
+CREATE TABLE Activity (
+    id TEXT NOT NULL PRIMARY KEY,
+    habitId TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    pointsEarned INTEGER NOT NULL,
+    bonusPoints INTEGER NOT NULL DEFAULT 0,
+    bonusReason TEXT NOT NULL DEFAULT ''
+);
+
+-- Get all activities
+selectAll:
+SELECT *
+FROM Activity
+ORDER BY timestamp DESC;
+
+-- Get activities for a specific habit
+selectByHabitId:
+SELECT *
+FROM Activity
+WHERE habitId = ?
+ORDER BY timestamp DESC;
+
+-- Insert a new activity
+insert:
+INSERT INTO Activity(id, habitId, timestamp, pointsEarned, bonusPoints, bonusReason)
+VALUES (?, ?, ?, ?, ?, ?);
+
+-- Delete an activity
+delete:
+DELETE FROM Activity
+WHERE id = ?;
+
+-- Delete all activities for a habit
+deleteByHabitId:
+DELETE FROM Activity
+WHERE habitId = ?;
