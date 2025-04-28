@@ -1,0 +1,96 @@
+CREATE TABLE Goal (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    targetDate INTEGER NOT NULL DEFAULT 0,
+    progress REAL NOT NULL DEFAULT 0.0,
+    isCompleted INTEGER NOT NULL DEFAULT 0
+);
+
+-- Junction table for Goal-Habit relationships
+CREATE TABLE GoalHabitJunction (
+    goalId TEXT NOT NULL,
+    habitId TEXT NOT NULL,
+    PRIMARY KEY (goalId, habitId),
+    FOREIGN KEY (goalId) REFERENCES Goal(id) ON DELETE CASCADE,
+    FOREIGN KEY (habitId) REFERENCES Habit(id) ON DELETE CASCADE
+);
+
+-- Get all goals
+selectAll:
+SELECT *
+FROM Goal
+ORDER BY name;
+
+-- Get a specific goal
+selectById:
+SELECT *
+FROM Goal
+WHERE id = ?;
+
+-- Get goals that are not completed
+selectNotCompleted:
+SELECT *
+FROM Goal
+WHERE isCompleted = 0
+ORDER BY targetDate, name;
+
+-- Get goals that are completed
+selectCompleted:
+SELECT *
+FROM Goal
+WHERE isCompleted = 1
+ORDER BY targetDate DESC, name;
+
+-- Get habits for a specific goal
+selectHabitsForGoal:
+SELECT h.*
+FROM Habit h
+JOIN GoalHabitJunction j ON h.id = j.habitId
+WHERE j.goalId = ?
+ORDER BY h.name;
+
+-- Get goals for a specific habit
+selectGoalsForHabit:
+SELECT g.*
+FROM Goal g
+JOIN GoalHabitJunction j ON g.id = j.goalId
+WHERE j.habitId = ?
+ORDER BY g.name;
+
+-- Insert a new goal
+insertGoal:
+INSERT INTO Goal(id, name, description, targetDate, progress, isCompleted)
+VALUES (?, ?, ?, ?, ?, ?);
+
+-- Add a habit to a goal
+addHabitToGoal:
+INSERT INTO GoalHabitJunction(goalId, habitId)
+VALUES (?, ?);
+
+-- Remove a habit from a goal
+removeHabitFromGoal:
+DELETE FROM GoalHabitJunction
+WHERE goalId = ? AND habitId = ?;
+
+-- Update a goal
+updateGoal:
+UPDATE Goal
+SET name = ?,
+    description = ?,
+    targetDate = ?,
+    progress = ?,
+    isCompleted = ?
+WHERE id = ?;
+
+-- Update goal progress
+updateProgress:
+UPDATE Goal
+SET progress = ?,
+    isCompleted = CASE WHEN progress >= 1.0 THEN 1 ELSE 0 END
+WHERE id = ?;
+
+-- Delete a goal
+deleteGoal:
+DELETE FROM Goal
+WHERE id = ?;
